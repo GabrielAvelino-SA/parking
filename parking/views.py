@@ -1,24 +1,19 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from parking.models import Reservation
-from django.core import serializers
-from django.core.serializers.json import DjangoJSONEncoder
-from parking.models import Reservation
+#My
+from rest_framework import viewsets
+from .models import Reservation
+from .serializers import ReservationSerializer
+
 
 # my views here.
 
-@api_view(['GET', 'POST'])
-def reservation(request,pk):
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
 
-    try :
-        reservation = Reservation.objects.get(pk=id)
-    except:
-        return HttpResponse('notFound')
-    if request.method == 'GET':
-        get_ = serializers.serialize("json", Reservation.objects.all())
-        
-        return HttpResponse(len(get_))
-    
+def reservation(request,pk):
+   
     if request.method == 'POST':
         return HttpResponse('post')
     
