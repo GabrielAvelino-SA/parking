@@ -1,2 +1,5 @@
 Gerar numero de reserva
-imp-lementar api rest
+estudos de caso
+serializar e deserializar 
+
+<from rest_framework import routers>
