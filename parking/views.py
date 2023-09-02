@@ -1,8 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-#Rest Framiworks
-from rest_framework import viewsets
+#Rest Framework
 from rest_framework.parsers import JSONParser    
 
 #Modulos
@@ -55,8 +54,4 @@ def id_pay(request, id):
     pass
 def plate(requeest):
     pass
-
-class ReservationViewSet(viewsets.ModelViewSet):
-    queryset = Reservation.objects.all()
-    serializer_class = ReservationSerializer
 
