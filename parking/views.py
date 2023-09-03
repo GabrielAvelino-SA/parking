@@ -8,7 +8,7 @@ from rest_framework.parsers import JSONParser
 from .models import Reservation
 from .serializers import ReservationSerializer
 
-# my Views  
+# my Views
 
 @csrf_exempt
 def parking_list(request):
@@ -23,13 +23,12 @@ def parking_list(request):
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(serializer.data, status=201)
-            
             return JsonResponse(serializer.errors, status=400)
 
 @csrf_exempt
-def parking_detail(request,id):
+def parking_detail(request,plate):
     try:
-        reservation =  Reservation.objects.get(id=id)
+        reservation =  Reservation.objects.get(plate=request.plate)
 
     except Reservation.DoesNotExist:
         return HttpResponse(status=404)
@@ -45,7 +44,6 @@ def parking_detail(request,id):
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.erros, status=400)
-
 
 def id_out(request, id):
     out = request.get()
