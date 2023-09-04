@@ -4,8 +4,8 @@ from parking.models import Reservation
 class ReservationSerializer(serializers.Serializer):
     id =  serializers.IntegerField(read_only=True)
     plate = serializers.CharField(max_length=8)
-    timeOut = serializers.TimeField("Time started")
-    pay = serializers.BooleanField(default=False)
+    time = serializers.TimeField(required = False)
+    paid = serializers.BooleanField(default=False)
 
     #Methods of Reservetion Serializer
     def create(self,validated_data):
@@ -18,6 +18,6 @@ class ReservationSerializer(serializers.Serializer):
         '''
         update and return and existent reservation
         '''
-        instance.pay = validate_data.get ('pay', instance.pay)
+        instance.paid = validate_data.get ('paid', instance.paid)
         instance.save()
         return instance
