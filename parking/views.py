@@ -33,7 +33,7 @@ def plate_detail(request,plate):
 def parking(request):
     if request.method =='POST':
             data = JSONParser().parse(request)
-            return JsonResponse(data)
+            #VALIDAR JSON
             serializer = ReservationSerializer(data=data)
 
             if serializer.is_valid():
