@@ -6,12 +6,29 @@ from django.core import validators
 from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view
 
-
 #Modulos
 from .models import Reservation
 from .serializers import ReservationSerializer
 
 # my Views
+@api_view(['POST'])
+def parking(request):
+
+    if request.method =='POST':
+            data = JSONParser().parse(request)
+
+            #validar dado não permitindo a inserção de tempo ou pagamento
+            
+            serializer = ReservationSerializer(data=data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+
+                return JsonResponse(serializer.data, status=201)
+            
+            return JsonResponse(serializer.errors, status=400)
+    else:
+        return HttpResponse(status=405)
 
 @api_view(['GET'])
 def plate_detail(request,plate):
@@ -26,36 +43,20 @@ def plate_detail(request,plate):
         serializer = ReservationSerializer(reservation)
         return JsonResponse(serializer.data)
     
-    #TRY EXEPT FOR SECURITY
+    else:
+        return HttpResponse(status=405)
 
-
-@api_view(['POST'])
-def parking(request):
-    if request.method =='POST':
-            data = JSONParser().parse(request)
-            #VALIDAR JSON
-            serializer = ReservationSerializer(data=data, partial=True)
-            
-            if serializer.is_valid():
-                serializer.save()
-                return JsonResponse(serializer.data, status=201)
-            return JsonResponse(serializer.errors, status=400)
-
-@csrf_exempt
-def parking_detail(request,id):
+@api_view(['PUT'])
+def reservation_out(request,id):
     try:
         reservation =  Reservation.objects.get(id=id)
 
     except Reservation.DoesNotExist:
         return HttpResponse(status=404)
     
-    if request.method =='GET':
-        serializer = ReservationSerializer(reservation)
-        return JsonResponse(serializer.data)
-    
-    elif request.method == 'PUT':
+    if request.method == 'PUT':
         data = JSONParser().parse(request)
-        serializer = ReservationSerializer(reservation, data=data)
+        serializer = ReservationSerializer(reservation, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
