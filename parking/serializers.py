@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from parking.models import Reservation
+from re import compile
 
-class ReservationSerializer(serializers.Serializer):
+class ReservationSerializer(serializers.Serializer): 
     id =  serializers.IntegerField(read_only=True)
     plate = serializers.CharField(max_length=8)
-    time = serializers.TimeField(required = False)
+    time = serializers.TimeField(read_only=True)
     paid = serializers.BooleanField(default=False)
 
     #Methods of Reservetion Serializer
@@ -12,7 +13,8 @@ class ReservationSerializer(serializers.Serializer):
         '''
         Create and return a new Reservation given the validate  
         '''
-        return Reservation.objects.create(validated_data)
+
+        return Reservation.objects.create(**validated_data)
     
     def update(self,instance,validate_data):
         '''

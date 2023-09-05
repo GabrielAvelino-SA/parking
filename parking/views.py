@@ -34,12 +34,11 @@ def parking(request):
     if request.method =='POST':
             data = JSONParser().parse(request)
             #VALIDAR JSON
-            serializer = ReservationSerializer(data=data)
-
+            serializer = ReservationSerializer(data=data, partial=True)
+            
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(serializer.data, status=201)
-            
             return JsonResponse(serializer.errors, status=400)
 
 @csrf_exempt
