@@ -28,8 +28,6 @@ class ReservationSerializer(serializers.Serializer):
         '''
         update and return and existent reservation
         '''
-        instance.plate = validate_data.get('plate',instance.plate)
-        instance.time = validate_data.get('time', instance.time)
         instance.paid = validate_data.get('paid', instance.paid)
         instance.left = validate_data.get('left', instance.left)
         instance.save()

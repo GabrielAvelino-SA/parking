@@ -54,10 +54,11 @@ def reservation_out(request,id):
     
     if request.method == 'PUT':
         data_ = JSONParser().parse(request)
-        serializer = ReservationSerializer(reservation, data=data_)
+        serializer = ReservationSerializer(reservation, data=data_, partial=True)
 
         if serializer.is_valid():
-            serializer.save()
+            reservation.paid = serializer.data['paid']
+            reservation.save()
             return JsonResponse(status=201)
         return JsonResponse(serializer.erros, status=406)
     else:
