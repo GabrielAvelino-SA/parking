@@ -11,9 +11,6 @@ class Reservation(models.Model):
     time = models.TimeField(auto_now_add=True, auto_now=False, blank=False)
     paid = models.BooleanField(default=False, blank=False)
     left = models.BooleanField(default=False, blank=False)
-
-    #def get_time(self):
-     #   return self.time -
-
+    
     def __str__(self):
         return self.plate
