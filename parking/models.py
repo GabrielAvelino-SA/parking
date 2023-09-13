@@ -5,9 +5,7 @@ class Reservation(models.Model):
     plate = models.CharField(
         validators=[RegexValidator(r"[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}", message="Wrong Format")],
         max_length=8,
-        blank=False, 
-        unique=True,
-        null=False)
+        unique=True)
     time = models.TimeField(auto_now_add=True, auto_now=False, blank=False)
     paid = models.BooleanField(default=False, blank=False)
     left = models.BooleanField(default=False, blank=False)

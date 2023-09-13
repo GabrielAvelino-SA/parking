@@ -17,21 +17,3 @@ class ReservationSerializer(serializers.Serializer):
     time = serializers.TimeField(read_only=True)
     paid = serializers.BooleanField(default=False, read_only=True)
     left = serializers.BooleanField(default=False, read_only=True)
-
-
-    #Methods ReservetionSerializer
-    def create(self,validated_data):
-        '''
-        Create and return a new Reservation given the validate
-
-        '''
-        return Reservation.objects.create(**validated_data)
-    
-    def update(self,instance,validate_data):
-        '''
-        update and return and existent reservation
-        '''
-        instance.paid = validate_data.get('paid', instance.paid)
-        instance.left = validate_data.get('left', instance.left)
-        instance.save()
-        return instance
