@@ -1,15 +1,9 @@
-#Rest Framework
-from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.response import Response
-from django.http import HttpResponse
-
 from rest_framework import serializers
+
+from django.http import HttpResponse, JsonResponse
 from django.core.validators import RegexValidator
 from parking.models import Reservation
-
 
 class ReservationSerializer(serializers.Serializer):
     id =  serializers.IntegerField(read_only=True)
@@ -24,59 +18,56 @@ class ReservationSerializer(serializers.Serializer):
     paid = serializers.BooleanField(default=False, read_only=True)
     left = serializers.BooleanField(default=False, read_only=True)
 
-# my Views
-@api_view(['POST'])
-def parking(request):
+    def create(self, validated_data):
+        return Reservation.objects.create(**validated_data)
 
-    if request.method =='POST':
-            data_ = JSONParser().parse(request)
-
-            serializer = ReservationSerializer(data=data_, partial=True)
-            
-            if serializer.is_valid():
-                serializer.save()
-                return Response(status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
-    else:
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+#Detail reservatios
 @api_view(['GET'])
 def plate_detail(request,plate):
-    
     reservation = Reservation.objects.get(plate=plate)
     if reservation:
-         
-        pass#Serializar api
+         #reservas aneriores
+         return JsonResponse(ReservationSerializer(reservation).data, status=201)
     else:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-        serializer = ReservationSerializer(reservation)
-        return Response(serializer.data)
+        return HttpResponse(status=404)
+
+#New Reservation
+@api_view(['POST'])
+def parking(request):
+    #consultar se usuario já realizou chekin antes
+    try:
+        query = Reservation.objects.get(plate=request.data['plate'])
+    except:
+        reservation = ReservationSerializer(data=request.data, partial=True)
+        
+    if reservation.is_valid():
+        reservation.save()
+        return HttpResponse(status=201)
+    else:
+        return JsonResponse(reservation.errors, status=406)
 
 @api_view(['PUT'])
 def reservation_out(request,id):
-    
         reservation =  Reservation.objects.get(id=id)
-        if reservation:
-             status = request.data['paid']
-             reservation.paid = bool(status)
-             reservation.save()
-             return HttpResponse("ok",status=201)
+        if reservation.paid and reservation.left == False:
+            status = request.data['left']
+            reservation.paid = bool(status)
+            reservation.save()
+            return HttpResponse("Success Check Out", status=201)
+        elif reservation.left:
+            return HttpResponse("Realizar nova entrada<Button>")#Tela de realizar nova entrada
+        elif reservation.paid == False:
+            return HttpResponse("without payment Realizar pagamento?", status=201)#se sim dar entrada ao pagamento
         else:
             return HttpResponse(status=404)
 
 @api_view(['PUT'])
 def reservation_pay(request,id):
-     
      reservation = Reservation.objects.get(id=id)
      if reservation:
-          status = request.data['left']
+          status = request.data['paid']
           reservation.left = bool(status)
           reservation.save()
-          return Response(status=201)
+          return HttpResponse("Success", status=201)
      else:
         return HttpResponse(status=404)
-          
-    
-    
-        
