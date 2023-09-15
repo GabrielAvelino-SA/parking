@@ -9,12 +9,17 @@ class Reservation(models.Model):
     time = models.TimeField(auto_now_add=True)
     paid = models.BooleanField(default=False, blank=False)
     left = models.BooleanField(default=False, blank=False)
+
+    def create(self, **validated_data):
+         return Reservation.objects.create(**validated_data)
     
     def __str__(self):
         return self.plate
     
-    class Historico(models.model):
-        id_plate = ""#foreing =key
-        check_in = ""#check in
-        check_out = ""#check out
+class Historico(models.Model):
+    id_reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, to_field='id')
+    date = models.DateField()
+    time = models.DurationField()
+    def __str__(self) :
+        return self.id_plate
         

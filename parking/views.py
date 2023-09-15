@@ -4,6 +4,7 @@ from rest_framework import serializers
 from django.http import HttpResponse, JsonResponse
 from django.core.validators import RegexValidator
 from parking.models import Reservation
+from datetime import datetime
 
 class ReservationSerializer(serializers.Serializer):
     id =  serializers.IntegerField(read_only=True)
@@ -21,6 +22,11 @@ class ReservationSerializer(serializers.Serializer):
     def create(self, validated_data):
         return Reservation.objects.create(**validated_data)
 
+class HistorySerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    id_reservation = serializers.IntegerField(read_only=True)
+    date = serializers.DateField()
+    time = serializers.DurationField()
 #Detail reservatios
 @api_view(['GET'])
 def plate_detail(request,plate):
@@ -34,30 +40,37 @@ def plate_detail(request,plate):
 #New Reservation
 @api_view(['POST'])
 def parking(request):
-    #consultar se usuario já realizou chekin antes
     try:
+        # Novo Checkout
         query = Reservation.objects.get(plate=request.data['plate'])
+        if query.left == False:
+            return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
+        query.time = datetime.now().time
+        query.paid = bool(False)
+        query.paid = bool(False)
+        query.save
+        return HttpResponse("Check-In Realizado", status=201)
     except:
+        # cadastro e checkout
         reservation = ReservationSerializer(data=request.data, partial=True)
-        
-    if reservation.is_valid():
-        reservation.save()
-        return HttpResponse(status=201)
-    else:
-        return JsonResponse(reservation.errors, status=406)
+        if reservation.is_valid():
+            reservation.save()
+            return HttpResponse("Check-In Realizado", status=201)
+        else:
+            return JsonResponse(reservation.errors, status=406)
 
 @api_view(['PUT'])
 def reservation_out(request,id):
         reservation =  Reservation.objects.get(id=id)
         if reservation.paid and reservation.left == False:
             status = request.data['left']
-            reservation.paid = bool(status)
+            reservation.left = bool(status)
             reservation.save()
             return HttpResponse("Success Check Out", status=201)
         elif reservation.left:
-            return HttpResponse("Realizar nova entrada<Button>")#Tela de realizar nova entrada
+            return HttpResponse("Realizar nova entrada <button type=\"button\">Click Me!</button>")
         elif reservation.paid == False:
-            return HttpResponse("without payment Realizar pagamento?", status=201)#se sim dar entrada ao pagamento
+            return HttpResponse("Realizar pagamento? <button type=\"button\">Click Me!</button>", status=201)#se sim dar entrada ao pagamento
         else:
             return HttpResponse(status=404)
 
@@ -65,9 +78,11 @@ def reservation_out(request,id):
 def reservation_pay(request,id):
      reservation = Reservation.objects.get(id=id)
      if reservation:
+          if reservation.paid:
+            return HttpResponse("Pagamento já Realizado", status=201)
           status = request.data['paid']
-          reservation.left = bool(status)
+          reservation.paid = bool(status)
           reservation.save()
-          return HttpResponse("Success", status=201)
+          return HttpResponse("Pagamento Realizado", status=201)
      else:
         return HttpResponse(status=404)
