@@ -6,5 +6,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     #My URLS
-    path('', include("parking.urls")),
+    path('parking/', include("parking.urls")),
 ]

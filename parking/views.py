@@ -2,59 +2,93 @@ from rest_framework.decorators import api_view
 from rest_framework import serializers
 
 from django.http import HttpResponse, JsonResponse
+from django.template import loader
+from django.views import generic
+from django.shortcuts import render
 from django.core.validators import RegexValidator
-from parking.models import Reservation
+from parking.models import Reservation,Historico
 from datetime import datetime
 
-class ReservationSerializer(serializers.Serializer):
-    id =  serializers.IntegerField(read_only=True)
-    plate = serializers.CharField(
-        max_length=8,
-        read_only = False,
-        validators=[
-            RegexValidator(r"[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}", 
-            message="Wrong Format")]
-        )
-    time = serializers.TimeField(read_only=True)
-    paid = serializers.BooleanField(default=False, read_only=True)
-    left = serializers.BooleanField(default=False, read_only=True)
-
-    def create(self, validated_data):
-        return Reservation.objects.create(**validated_data)
-
-class HistorySerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    id_reservation = serializers.IntegerField(read_only=True)
-    date = serializers.DateField()
-    time = serializers.DurationField()
 #Detail reservatios
+
+class ReservationDetail(generic.ListView):
+    queryset = Reservation.objects.all()
+
+
 @api_view(['GET'])
-def plate_detail(request,plate):
-    reservation = Reservation.objects.get(plate=plate)
-    if reservation:
-         #reservas aneriores
-         return JsonResponse(ReservationSerializer(reservation).data, status=201)
+def parking_detail(request):
+    reservations = Reservation.objects.all()
+    if reservations:
+         #reservas ateriores
+         return render(request, "parkinListDetail.html", {"reservations":reservations})
     else:
         return HttpResponse(status=404)
+
+@api_view(['GET'])
+def reservation(request,id):
+    if Reservation.objects.filter(pk=id).exists:
+        query = Reservation.objects.get(pk=id)
+        return 
+    else:
+        return HttpResponse("Não encontrado")
 
 #New Reservation
 @api_view(['POST'])
 def parking(request):
+    if Reservation.objects.filter(plate=request.data['plate']).exists():
+        reservation = Reservation.objects.get(plate=request.data['plate'])
+    else:
+        reservation = None
+
+    if reservation and reservation.left == False:
+        return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
+    else:
+
+        historico = Historico()
+        historico.time = '00:00:00'
+        #historico.id_reservation = 
+        query = HistorySerializer(data=queryHistorico.date, date=True)
+        if query.is_valid:
+            queryHistorico.save()
+        else:
+            return JsonResponse(queryHistorico.errors, status=406)
+
     try:
         # Novo Checkout
-        query = Reservation.objects.get(plate=request.data['plate'])
-        if query.left == False:
+        if Reservation.objects.filter(plate=request.data['plate']).exists():
+            queryReservation = Reservation.objects.get(plate=request.data['plate'])
+        else:
+            queryReservation = None
+
+        if queryReservation and queryReservation.left == False:
             return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
-        query.time = datetime.now().time
-        query.paid = bool(False)
-        query.paid = bool(False)
-        query.save
+        
+        queryHistorico = Historico()
+        queryHistorico.time = '00:00:00'
+        query = HistorySerializer(data=queryHistorico.date, date=True)
+
+        if query.is_valid:
+            queryHistorico.save()
+        else:
+            return JsonResponse(queryHistorico.errors, status=406)
+    
+        queryReservation.time = datetime.now().time()
+        queryReservation.left = bool(False)
+        queryReservation.paid = bool(False)
+
+        queryReservation.save()
         return HttpResponse("Check-In Realizado", status=201)
+    
     except:
         # cadastro e checkout
         reservation = ReservationSerializer(data=request.data, partial=True)
         if reservation.is_valid():
             reservation.save()
+
+            history = HistorySerializer(partial=True)
+            history.id_reservation = reservation.id
+            
+            history.save()
             return HttpResponse("Check-In Realizado", status=201)
         else:
             return JsonResponse(reservation.errors, status=406)

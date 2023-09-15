@@ -13,13 +13,20 @@ class Reservation(models.Model):
     def create(self, **validated_data):
          return Reservation.objects.create(**validated_data)
     
+    def get_values(self):
+        return [(field, field.value_to_string(self)) for field in Reservation._meta.fields]
+    
     def __str__(self):
         return self.plate
     
 class Historico(models.Model):
     id_reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, to_field='id')
-    date = models.DateField()
+    date = models.DateField(auto_now=True)
     time = models.DurationField()
+
+    def create(self, **validated_data):
+         return Historico.objects.create(**validated_data)
+
     def __str__(self) :
         return self.id_plate
         
