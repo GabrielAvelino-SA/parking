@@ -1,13 +1,12 @@
 from rest_framework.decorators import api_view
-from rest_framework import serializers
 
 from django.http import HttpResponse, JsonResponse
-from django.template import loader
 from django.views import generic
 from django.shortcuts import render
-from django.core.validators import RegexValidator
 from parking.models import Reservation,Historico
-from datetime import datetime
+from datetime import datetime, timedelta
+from re import search
+from django.core.exceptions import ValidationError
 
 #Detail reservatios
 
@@ -16,7 +15,7 @@ class ReservationDetail(generic.ListView):
 
 
 @api_view(['GET'])
-def parking_detail(request):
+def reservations(request):
     reservations = Reservation.objects.all()
     if reservations:
          #reservas ateriores
@@ -25,74 +24,48 @@ def parking_detail(request):
         return HttpResponse(status=404)
 
 @api_view(['GET'])
-def reservation(request,id):
-    if Reservation.objects.filter(pk=id).exists:
+def reservation(request,id):    
+    if Reservation.objects.filter(pk=id).exists():
         query = Reservation.objects.get(pk=id)
-        return 
+        return render (request, "reservationDetail.html", {"reservation":query})
     else:
-        return HttpResponse("Não encontrado")
-
+        return HttpResponse("Objeto Não encontrado")
 #New Reservation
 @api_view(['POST'])
-def parking(request):
-    if Reservation.objects.filter(plate=request.data['plate']).exists():
-        reservation = Reservation.objects.get(plate=request.data['plate'])
-    else:
-        reservation = None
-
-    if reservation and reservation.left == False:
-        return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
-    else:
-
-        historico = Historico()
-        historico.time = '00:00:00'
-        #historico.id_reservation = 
-        query = HistorySerializer(data=queryHistorico.date, date=True)
-        if query.is_valid:
-            queryHistorico.save()
-        else:
-            return JsonResponse(queryHistorico.errors, status=406)
-
-    try:
-        # Novo Checkout
+def new_user(request):
+    plate = request.data['plate']
+    def Validateplate(plate):
+        return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
+    
+    if Validateplate(plate):
         if Reservation.objects.filter(plate=request.data['plate']).exists():
-            queryReservation = Reservation.objects.get(plate=request.data['plate'])
-        else:
-            queryReservation = None
+            reservation = Reservation.objects.get(plate=request.data['plate'])
+            #se usuario não fez checkout
+            if reservation.left:
+                reservation.paid = bool(False)
+                reservation.left = bool(False)
+                reservation.date = datetime.now()
+                reservation.save()
 
-        if queryReservation and queryReservation.left == False:
-            return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
+                Historico.objects.create(
+                    checkIn = datetime.now(), 
+                    id_reservation = reservation
+                )
+                #criarnovo checkIn
+                pass
+            else:
+                return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
+        else:
+            newUser = Reservation.objects.create(plate=plate)
+            Historico.objects.create(
+                checkIn = datetime.now(), 
+                id_reservation = newUser
+                )
+            return HttpResponse(f"The Plate {plate} is valid, your number check in is {newUser.pk}")
         
-        queryHistorico = Historico()
-        queryHistorico.time = '00:00:00'
-        query = HistorySerializer(data=queryHistorico.date, date=True)
-
-        if query.is_valid:
-            queryHistorico.save()
-        else:
-            return JsonResponse(queryHistorico.errors, status=406)
+    else:
+        return HttpResponse(f"The Plate {plate} is not valid", status=201)
     
-        queryReservation.time = datetime.now().time()
-        queryReservation.left = bool(False)
-        queryReservation.paid = bool(False)
-
-        queryReservation.save()
-        return HttpResponse("Check-In Realizado", status=201)
-    
-    except:
-        # cadastro e checkout
-        reservation = ReservationSerializer(data=request.data, partial=True)
-        if reservation.is_valid():
-            reservation.save()
-
-            history = HistorySerializer(partial=True)
-            history.id_reservation = reservation.id
-            
-            history.save()
-            return HttpResponse("Check-In Realizado", status=201)
-        else:
-            return JsonResponse(reservation.errors, status=406)
-
 @api_view(['PUT'])
 def reservation_out(request,id):
         reservation =  Reservation.objects.get(id=id)
