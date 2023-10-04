@@ -10,10 +10,6 @@ from django.core.exceptions import ValidationError
 
 #Detail reservatios
 
-class ReservationDetail(generic.ListView):
-    queryset = Reservation.objects.all()
-
-
 @api_view(['GET'])
 def reservations(request):
     reservations = Reservation.objects.all()
@@ -29,18 +25,18 @@ def reservation(request,id):
         query = Reservation.objects.get(pk=id)
         return render (request, "reservationDetail.html", {"reservation":query})
     else:
-        return HttpResponse("Objeto Não encontrado")
-#New Reservation
+        return HttpResponse("Reserva Não encrontrada")
+
 @api_view(['POST'])
 def new_user(request):
     plate = request.data['plate']
+    #Regex validação mercosul
     def Validateplate(plate):
         return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
     
     if Validateplate(plate):
         if Reservation.objects.filter(plate=request.data['plate']).exists():
             reservation = Reservation.objects.get(plate=request.data['plate'])
-            #se usuario não fez checkout
             if reservation.left:
                 reservation.paid = bool(False)
                 reservation.left = bool(False)
@@ -52,7 +48,7 @@ def new_user(request):
                     id_reservation = reservation
                 )
                 #criarnovo checkIn
-                pass
+                return render(request, "CheckIn/newCheckIn.html")
             else:
                 return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
         else:
@@ -68,28 +64,48 @@ def new_user(request):
     
 @api_view(['PUT'])
 def reservation_out(request,id):
-        reservation =  Reservation.objects.get(id=id)
-        if reservation.paid and reservation.left == False:
-            status = request.data['left']
-            reservation.left = bool(status)
-            reservation.save()
-            return HttpResponse("Success Check Out", status=201)
-        elif reservation.left:
-            return HttpResponse("Realizar nova entrada <button type=\"button\">Click Me!</button>")
-        elif reservation.paid == False:
-            return HttpResponse("Realizar pagamento? <button type=\"button\">Click Me!</button>", status=201)#se sim dar entrada ao pagamento
+        
+        if Reservation.objects.filter(id=id).exists():
+            reservation = Reservation.objects.get(id=id)
+            historico = Historico.objects.filter(id_reservation = id)[:1]
+
+            #pagamento realizado/não realizou checkout
+            if reservation.left:
+                return render(request, "CheckOut/alreadyCheckOut.html")
+            if not reservation.paid:
+                return render(request,'CheckIn/notPayment.html')
+            elif not reservation.left:
+                status = request.data['left']
+                reservation.left = bool(status)
+                reservation.save()
+                #condicional de validação
+                if status:
+                    for object in historico:
+                        object.checkOut = datetime.now()
+                        object.save()
+                return render(request, "CheckOut/successCheckOut.html")
         else:
             return HttpResponse(status=404)
 
 @api_view(['PUT'])
 def reservation_pay(request,id):
-     reservation = Reservation.objects.get(id=id)
-     if reservation:
+     
+     if Reservation.objects.filter(id=id).exists:
+          reservation = Reservation.objects.get(id=id)
           if reservation.paid:
-            return HttpResponse("Pagamento já Realizado", status=201)
+            return render(request,'CheckIn/alreadyPayment.html')
           status = request.data['paid']
           reservation.paid = bool(status)
           reservation.save()
-          return HttpResponse("Pagamento Realizado", status=201)
+          return render(request,'CheckIn/successPayment.html')
      else:
         return HttpResponse(status=404)
+     
+@api_view(['GET'])
+def historico(request, id):
+    history = Historico.objects.filter(id_reservation=id)
+    if historico:
+         return render(request, "Historico/listHistory.html", {"history":history})
+    else:
+        return HttpResponse(status=404)
+

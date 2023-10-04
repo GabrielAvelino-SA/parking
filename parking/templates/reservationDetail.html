@@ -1,20 +1,29 @@
-<table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Id</th>
-        <th scope="col">Placa</th>
-        <th scope="col">Tempo</th>
-        <th scope="col">Pago</th>
-        <th scope="col">Check-Out</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <th scope="row">{{ reservation.id }}</th>
-        <th>{{ reservation.plate }}</th>
-        <th>{{ reservation.time }}</th>
-        <th>{{ reservation.paid }}</th>
-        <th>{{ reservation.left }}</th>
-      </tr>
-    </tbody>
-</table>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+</head>
+<body>
+    <table class="table">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">Id</th>
+          <th scope="col">Placa</th>   
+          <th scope="col">Tempo</th>
+          <th scope="col">Pago</th>
+          <th scope="col">Check-Out</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">{{ reservation.id }}</th>
+          <th>{{ reservation.plate }}</th>
+          <th>{{ reservation.time }}</th>
+          <th>{{ reservation.paid }}</th>
+          <th>{{ reservation.left }}</th>
+        </tr>
+      </tbody>
+  </table>
+</body>

@@ -10,19 +10,19 @@
       <thead class="table-dark">
         <tr>
           <th scope="col">Id</th>
-          <th scope="col">Placa</th>
-          <th scope="col">Tempo</th>
-          <th scope="col">Pago</th>
+          <th scope="col">Id Reserva</th>
+          <th scope="col">CheckIn</th>
           <th scope="col">Check-Out</th>
         </tr>
       </thead>
       <tbody>
+      {% for historico in history %}
         <tr>
-          <th scope="row">{{ reservation.id }}</th>
-          <th>{{ reservation.plate }}</th>
-          <th>{{ reservation.time }}</th>
-          <th>{{ reservation.paid }}</th>
-          <th>{{ reservation.left }}</th>
+          <th scope="row">{{ historico.id }}</th>
+          <th>{{ historico.plate }}</th>
+          <th>{{ historico.date }}</th>
+          <th>{{ historico.paid }}</th>
+          <th>{{ historico.left }}</th>
         </tr>
         {% endfor %}
       </tbody>

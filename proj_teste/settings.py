@@ -40,7 +40,8 @@ INSTALLED_APPS = [
 
     #My APPS
     'rest_framework',
-    'parking'
+    'parking',
+    'bootstrap5'
 ]
 
 MIDDLEWARE = [
