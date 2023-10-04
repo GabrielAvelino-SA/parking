@@ -19,10 +19,9 @@
       {% for historico in history %}
         <tr>
           <th scope="row">{{ historico.id }}</th>
-          <th>{{ historico.plate }}</th>
-          <th>{{ historico.date }}</th>
-          <th>{{ historico.paid }}</th>
-          <th>{{ historico.left }}</th>
+          <th>{{ historico.id_reserva }}</th>
+          <th>{{ historico.CheckIn }}</th>
+          <th>{{ historico.CheckOut }}</th>
         </tr>
         {% endfor %}
       </tbody>
