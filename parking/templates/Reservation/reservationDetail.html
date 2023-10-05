@@ -11,7 +11,6 @@
         <tr>
           <th scope="col">Id</th>
           <th scope="col">Placa</th>   
-          <th scope="col">Tempo</th>
           <th scope="col">Pago</th>
           <th scope="col">Check-Out</th>
         </tr>
@@ -20,10 +19,28 @@
         <tr>
           <th scope="row">{{ reservation.id }}</th>
           <th>{{ reservation.plate }}</th>
-          <th>{{ reservation.time }}</th>
           <th>{{ reservation.paid }}</th>
           <th>{{ reservation.left }}</th>
         </tr>
       </tbody>
   </table>
+  <h5>Historico<span class="badge badge-secondary">New</span></h5>
+  <table class="table">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Id</th>
+        <th scope="col">CheckIn</th>
+        <th scope="col">Check-Out</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for historico in history %}
+      <tr>
+        <th scope="row">{{ historico.id }}</th>
+        <th>{{ historico.checkIn }}</th>
+        <th>{{ historico.checkOut }}</th>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
 </body>

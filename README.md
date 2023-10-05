@@ -1,12 +1,13 @@
 # Parking
 
+### Novo Usuario
+URL: {{url}}/parking/newUser/
 
-### Regex
-Regex "[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}"
+JSON: {"plate":"AAA-1B23"}
 
-Padrão das Placas Mercosul na mudança do segundo dígito:
+Regex Validação Mercosul: "[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}"
 
-<img src="https://cdn1.gnarususercontent.com.br/1/1365562/0c9b4098-6b72-4574-a612-79c143e7612e.png" width="200" />
+### Pagamento
 
 ### Referencias
 [Placa Mercosul](https://carbig.com/dicas/entenda-novas-placas-padrao-mercosul) | 

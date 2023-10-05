@@ -1,0 +1,20 @@
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+</head>
+<body>
+    <form method="post">
+        <div class="form-group">
+
+          <label>Placa  </label>
+          <input type="text" id="plate" class="form-control mx-sm-3" placeholder="Exenplo: AAA-1J23">
+          <small id="passwordHelpInline" class="text-muted">
+            
+          </small>
+          <button type="submit" class="btn btn-primary my-1">Enviar</button>
+        </div>
+    </form>
+</body>

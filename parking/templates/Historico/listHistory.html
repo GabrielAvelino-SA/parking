@@ -10,7 +10,6 @@
       <thead class="table-dark">
         <tr>
           <th scope="col">Id</th>
-          <th scope="col">Id Reserva</th>
           <th scope="col">CheckIn</th>
           <th scope="col">Check-Out</th>
         </tr>
@@ -19,9 +18,8 @@
       {% for historico in history %}
         <tr>
           <th scope="row">{{ historico.id }}</th>
-          <th>{{ historico.id_reserva }}</th>
-          <th>{{ historico.CheckIn }}</th>
-          <th>{{ historico.CheckOut }}</th>
+          <th>{{ historico.checkIn }}</th>
+          <th>{{ historico.checkOut }}</th>
         </tr>
         {% endfor %}
       </tbody>

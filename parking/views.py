@@ -8,29 +8,13 @@ from datetime import datetime, timedelta
 from re import search
 from django.core.exceptions import ValidationError
 
-#Detail reservatios
 
-@api_view(['GET'])
-def reservations(request):
-    reservations = Reservation.objects.all()
-    if reservations:
-         #reservas ateriores
-         return render(request, "parkinListDetail.html", {"reservations":reservations})
-    else:
-        return HttpResponse(status=404)
-
-@api_view(['GET'])
-def reservation(request,id):    
-    if Reservation.objects.filter(pk=id).exists():
-        query = Reservation.objects.get(pk=id)
-        return render (request, "reservationDetail.html", {"reservation":query})
-    else:
-        return HttpResponse("Reserva Não encrontrada")
-
+#new Reservation
 @api_view(['POST'])
-def new_user(request):
+def new_reservation(request):
     plate = request.data['plate']
-    #Regex validação mercosul
+
+    #Validação mercosul
     def Validateplate(plate):
         return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
     
@@ -57,32 +41,31 @@ def new_user(request):
                 checkIn = datetime.now(), 
                 id_reservation = newUser
                 )
-            return HttpResponse(f"The Plate {plate} is valid, your number check in is {newUser.pk}")
+            return render(request, "Reservation/successNewReservation.html", {"plate":plate,"pk":newUser.pk})
         
     else:
-        return HttpResponse(f"The Plate {plate} is not valid", status=201)
-    
+        return render(request, "Alert/danger.html",{'plate':plate})
+  
 @api_view(['PUT'])
 def reservation_out(request,id):
         
         if Reservation.objects.filter(id=id).exists():
-            reservation = Reservation.objects.get(id=id)
-            historico = Historico.objects.filter(id_reservation = id)[:1]
 
-            #pagamento realizado/não realizou checkout
+            reservation = Reservation.objects.get(id=id)
+            historico = Historico.objects.filter(id_reservation = id).order_by("-id")[0]
+
             if reservation.left:
                 return render(request, "CheckOut/alreadyCheckOut.html")
             if not reservation.paid:
-                return render(request,'CheckIn/notPayment.html')
+                return render(request,'CheckOut/notPayment.html')
             elif not reservation.left:
                 status = request.data['left']
                 reservation.left = bool(status)
                 reservation.save()
                 #condicional de validação
                 if status:
-                    for object in historico:
-                        object.checkOut = datetime.now()
-                        object.save()
+                    historico.checkOut = datetime.now()
+                    historico.save()
                 return render(request, "CheckOut/successCheckOut.html")
         else:
             return HttpResponse(status=404)
@@ -93,19 +76,29 @@ def reservation_pay(request,id):
      if Reservation.objects.filter(id=id).exists:
           reservation = Reservation.objects.get(id=id)
           if reservation.paid:
-            return render(request,'CheckIn/alreadyPayment.html')
+            return render(request,'CheckOut/alreadyPayment.html')
           status = request.data['paid']
           reservation.paid = bool(status)
           reservation.save()
-          return render(request,'CheckIn/successPayment.html')
+          return render(request,'CheckOut/successPayment.html')
      else:
         return HttpResponse(status=404)
-     
+
 @api_view(['GET'])
-def historico(request, id):
-    history = Historico.objects.filter(id_reservation=id)
-    if historico:
-         return render(request, "Historico/listHistory.html", {"history":history})
+def reservation(request,plate):
+    if Reservation.objects.filter(plate=plate).exists():
+        queryReservation = Reservation.objects.get(plate=plate)
+        queryHistory = Historico.objects.filter(id_reservation=queryReservation.pk)
+        return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
+    else:
+        return HttpResponse("Reserva Não encrontrada")
+
+#Auxiliares
+@api_view(['GET'])
+def reservations(request):
+    reservations = Reservation.objects.all()
+    if reservations:
+         #reservas ateriores
+         return render(request, "Auxiliares/reservationList.html", {"reservations":reservations})
     else:
         return HttpResponse(status=404)
-
