@@ -1,8 +1,7 @@
 from typing import Any
 from django.db import models
 from django.core.validators import RegexValidator
-from datetime import datetime
-
+from datetime import timedelta, datetime
 class Reservation(models.Model):
     plate = models.CharField(
         validators=[
@@ -33,4 +32,9 @@ class Historico(models.Model):
     
     def deltaTime(self):
         # create delta time
-        return
+        dateCheckOut = self.checkOut
+        datecheckIn = self.checkIn
+
+        time = datetime.time(datecheckIn.time) - datetime(dateCheckOut.time)
+    
+        return time 

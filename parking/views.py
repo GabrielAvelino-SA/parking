@@ -7,6 +7,8 @@ from re import search
 #new Reservation
 @api_view(['POST'])
 def new_reservation(request):
+
+
     plate = request.data['plate']
 
     #Validação mercosul
@@ -59,6 +61,7 @@ def reservation_out(request,id):
                 if status:
                     historico.checkOut = datetime.now()
                     historico.save()
+
                 return render(request, "Alert/success.html",{'massage':'Success Check Out'})
         else:
             return HttpResponse(status=404)

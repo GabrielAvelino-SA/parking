@@ -31,6 +31,7 @@
         <th scope="col">Id</th>
         <th scope="col">CheckIn</th>
         <th scope="col">Check-Out</th>
+        <th scope="col">DeltaTime</th>
       </tr>
     </thead>
     <tbody>
@@ -39,6 +40,7 @@
         <th scope="row">{{ historico.id }}</th>
         <th>{{ historico.checkIn }}</th>
         <th>{{ historico.checkOut }}</th>
+        <th>{{ historico.deltaTime }}</th>
       </tr>
       {% endfor %}
     </tbody>
