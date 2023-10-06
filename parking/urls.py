@@ -6,9 +6,8 @@ urlpatterns = [
     path("", views.new_reservation, name='reservations'),
     path("<int:id>/out/", views.reservation_out),
     path("<int:id>/pay/", views.reservation_pay),
-    path("<str:plate>/", views.reservation, name="plate"),    
+    path("<str:plate>/", views.reservation_details, name="plate"),    
 
-    #Ausiliares 
-    path("list/reservations/", views.reservations, name='reservations'), 
-
+    #Auxiliares 
+    path("list/reservations/", views.reservations, name='reservations')
 ]

@@ -1,12 +1,15 @@
 <html>
+
 <head>
   <title>{% block title %}{% endblock %}</title>
   {% load bootstrap5 %}
   {% bootstrap_css %}
   {% bootstrap_javascript %}
 </head>
+
 <body>
-  <table class="table">
+  <div>
+    <table class="table">
       <thead class="table-dark">
         <tr>
           <th scope="col">Id</th>
@@ -26,5 +29,6 @@
         </tr>
         {% endfor %}
       </tbody>
-  </table>
+    </table>
+  </div>
 </body>

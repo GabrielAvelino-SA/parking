@@ -1,14 +1,9 @@
 from rest_framework.decorators import api_view
-
-from django.http import HttpResponse, JsonResponse
-from django.views import generic
+from django.http import HttpResponse
 from django.shortcuts import render
 from parking.models import Reservation,Historico
-from datetime import datetime, timedelta
+from datetime import datetime
 from re import search
-from django.core.exceptions import ValidationError
-
-
 #new Reservation
 @api_view(['POST'])
 def new_reservation(request):
@@ -32,32 +27,30 @@ def new_reservation(request):
                     id_reservation = reservation
                 )
                 #criarnovo checkIn
-                return render(request, "CheckIn/newCheckIn.html")
+                return render(request, "Alert/success.html", {'massage':f'The Plate { plate } is valid, your number check in is {reservation.pk}'})
             else:
-                return HttpResponse("Há uma reserva em aberto para estes dados", status=201)
+                return render(request,'Alert/warning.html',{'massage':'Open reservation'})
         else:
             newUser = Reservation.objects.create(plate=plate)
             Historico.objects.create(
                 checkIn = datetime.now(), 
                 id_reservation = newUser
                 )
-            return render(request, "Reservation/successNewReservation.html", {"plate":plate,"pk":newUser.pk})
-        
+            return render(request, "Alert/success.html", {'massage':f'The Plate { plate } is valid, your number check in is {newUser.pk}'})
     else:
-        return render(request, "Alert/danger.html",{'plate':plate})
+        return render(request, "Alert/warning.html",{'massage':f"The plate {plate} is no Valid"})
   
 @api_view(['PUT'])
 def reservation_out(request,id):
         
         if Reservation.objects.filter(id=id).exists():
-
             reservation = Reservation.objects.get(id=id)
             historico = Historico.objects.filter(id_reservation = id).order_by("-id")[0]
 
             if reservation.left:
-                return render(request, "CheckOut/alreadyCheckOut.html")
+                return render(request, "Alert/warning.html",{'massage':'Check in Already Done'})
             if not reservation.paid:
-                return render(request,'CheckOut/notPayment.html')
+                return render(request, "Alert/warning.html",{'massage':'You Need to Pay'})
             elif not reservation.left:
                 status = request.data['left']
                 reservation.left = bool(status)
@@ -66,32 +59,35 @@ def reservation_out(request,id):
                 if status:
                     historico.checkOut = datetime.now()
                     historico.save()
-                return render(request, "CheckOut/successCheckOut.html")
+                return render(request, "Alert/success.html",{'massage':'Success Check Out'})
         else:
             return HttpResponse(status=404)
 
 @api_view(['PUT'])
 def reservation_pay(request,id):
-     
      if Reservation.objects.filter(id=id).exists:
           reservation = Reservation.objects.get(id=id)
-          if reservation.paid:
-            return render(request,'CheckOut/alreadyPayment.html')
           status = request.data['paid']
-          reservation.paid = bool(status)
-          reservation.save()
-          return render(request,'CheckOut/successPayment.html')
+
+          if reservation.paid:
+            return render(request,'Alert/warning.html',{'massage':'Payment done'})
+          elif status:
+            reservation.paid = bool(status)
+            reservation.save()
+            return render(request,'Alert/success.html', {'massage':'Success Payment'})
+          else:
+              return render(request,'Alert/warning.html', {'massage':'Invalid value'}) 
      else:
         return HttpResponse(status=404)
 
 @api_view(['GET'])
-def reservation(request,plate):
+def reservation_details(request,plate):
     if Reservation.objects.filter(plate=plate).exists():
         queryReservation = Reservation.objects.get(plate=plate)
         queryHistory = Historico.objects.filter(id_reservation=queryReservation.pk)
         return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
     else:
-        return HttpResponse("Reserva Não encrontrada")
+        return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
 
 #Auxiliares
 @api_view(['GET'])
