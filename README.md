@@ -1,13 +1,26 @@
 # Parking
+The Descrição
 
-### Novo Usuario
-URL: {{url}}/parking/newUser/
+### Poutes
+POST -> New Reservation in Parking
+```
+/parking
+```
 
-JSON: {"plate":"AAA-1B23"}
+GET -> Details reservations for plate in Parking
+```
+/parking/<str:plate>
+```
 
-Regex Validação Mercosul: "[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}"
+PUT -> Payment 
+```
+/parking/<int:id>/pay
+```
 
-### Pagamento
+PUT -> Check Out
+```
+/parking/<int:id>/out
+```
 
 ### Referencias
 [Placa Mercosul](https://carbig.com/dicas/entenda-novas-placas-padrao-mercosul) | 

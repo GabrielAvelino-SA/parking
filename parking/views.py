@@ -1,15 +1,17 @@
+from rest_framework import status
 from rest_framework.decorators import api_view
-from django.http import HttpResponse
+from rest_framework.response import Response
 from django.shortcuts import render
-from parking.models import Reservation,Historico
+from parking.models import Reservation, Historico
 from datetime import datetime
 from re import search
+
+
 #new Reservation
 @api_view(['POST'])
 def new_reservation(request):
-
-
     plate = request.data['plate']
+    valiadation =  Reservation()
 
     #Validação mercosul
     def Validateplate(plate):
@@ -28,7 +30,6 @@ def new_reservation(request):
                     checkIn = datetime.now(), 
                     id_reservation = reservation
                 )
-                #criarnovo checkIn
                 return render(request, "Alert/success.html", {'massage':f'The Plate { plate } is valid, your number check in is {reservation.pk}'})
             else:
                 return render(request,'Alert/warning.html',{'massage':'Open reservation'})
@@ -64,11 +65,11 @@ def reservation_out(request,id):
 
                 return render(request, "Alert/success.html",{'massage':'Success Check Out'})
         else:
-            return HttpResponse(status=404)
-
+            return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
 @api_view(['PUT'])
 def reservation_pay(request,id):
-     if Reservation.objects.filter(id=id).exists:
+     if Reservation.objects.filter(id=id).exists():
+
           reservation = Reservation.objects.get(id=id)
           status = request.data['paid']
 
@@ -79,25 +80,39 @@ def reservation_pay(request,id):
             reservation.save()
             return render(request,'Alert/success.html', {'massage':'Success Payment'})
           else:
-              return render(request,'Alert/warning.html', {'massage':'Invalid value'}) 
+              Response({'massage':'Invalid value'})
+            #   return render(request,'Alert/warning.html', {'massage':'Invalid value'})
      else:
-        return HttpResponse(status=404)
+        return Response({"message":"Object inesisttete"}, status=400)
 
 @api_view(['GET'])
 def reservation_details(request,plate):
     if Reservation.objects.filter(plate=plate).exists():
-        queryReservation = Reservation.objects.get(plate=plate)
-        queryHistory = Historico.objects.filter(id_reservation=queryReservation.pk)
-        return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
+        data = Historico.objects.select_related('id_reservation').filter(id_reservation__plate=plate ).values('checkIn','checkOut','id_reservation__plate')
+
+        result = []
+        for d in data:
+            result.append({
+                "checkIn": d['checkIn'],
+                "checkOut": d['checkOut']
+            })
+
+        json = {
+            'plate':data[0]['id_reservation__plate'],
+            'hitory': result
+            }
+        return Response(json)
+        # return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
     else:
-        return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
+        return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
+        # return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
 
 #Auxiliares
 @api_view(['GET'])
 def reservations(request):
-    reservations = Reservation.objects.all()
-    if reservations:
-         #reservas ateriores
-         return render(request, "Auxiliares/reservationList.html", {"reservations":reservations})
+    if Reservation.objects.all().values():
+         return Response(list(Reservation.objects.all().values()))
     else:
-        return HttpResponse(status=404)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    #render(request, "Auxiliares/reservationList.html", {"reservations":reservations})

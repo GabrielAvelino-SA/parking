@@ -1,12 +1,13 @@
 from typing import Any
 from django.db import models
 from django.core.validators import RegexValidator
-from datetime import timedelta, datetime
+from django.core.exceptions import ValidationError
+
 class Reservation(models.Model):
     plate = models.CharField(
         validators=[
             RegexValidator(r"[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}", 
-            message="Wrong Format")],
+            message="The Format plate is no Valid")],
             max_length=8,
             unique=True)
     date = models.DateTimeField(auto_now_add=True)
@@ -22,7 +23,7 @@ class Reservation(models.Model):
 class Historico(models.Model):
     id_reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, to_field='id')
     checkIn = models.DateTimeField()
-    checkOut = models.DateTimeField(null=True, blank=True,)
+    checkOut = models.DateTimeField(null=True, blank=True)
 
     def create(self, **validated_data):
          return Historico.objects.create(**validated_data)
@@ -30,11 +31,9 @@ class Historico(models.Model):
     def __str__(self) :
         return self.id_reservation.plate
     
-    def deltaTime(self):
-        # create delta time
-        dateCheckOut = self.checkOut
-        datecheckIn = self.checkIn
-
-        time = datetime.time(datecheckIn.time) - datetime(dateCheckOut.time)
-    
-        return time 
+    def get_deltaTime(self):
+        try: 
+            time = self.checkOut - self.checkIn
+            return time
+        except:
+           return None

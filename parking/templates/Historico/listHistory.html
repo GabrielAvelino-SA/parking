@@ -1,27 +1,32 @@
 <html>
+
 <head>
   <title>{% block title %}{% endblock %}</title>
   {% load bootstrap5 %}
   {% bootstrap_css %}
   {% bootstrap_javascript %}
 </head>
+
 <body>
+  <h5>Historico<span class="badge badge-secondary">New</span></h5>
   <table class="table">
-      <thead class="table-dark">
-        <tr>
-          <th scope="col">Id</th>
-          <th scope="col">CheckIn</th>
-          <th scope="col">Check-Out</th>
-        </tr>
-      </thead>
-      <tbody>
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Id</th>
+        <th scope="col">CheckIn</th>
+        <th scope="col">Check-Out</th>
+        <th scope="col">Duração</th>
+      </tr>
+    </thead>
+    <tbody>
       {% for historico in history %}
-        <tr>
-          <th scope="row">{{ historico.id }}</th>
-          <th>{{ historico.checkIn }}</th>
-          <th>{{ historico.checkOut }}</th>
-        </tr>
-        {% endfor %}
-      </tbody>
+      <tr>
+        <th scope="row">{{ historico.id }}</th>
+        <th>{{ historico.checkIn }}</th>
+        <th>{{ historico.checkOut }}</th>
+        <th>{{ historico.get_deltaTime }}</th>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </body>
