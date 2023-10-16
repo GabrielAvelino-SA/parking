@@ -2,47 +2,64 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import render
-from parking.models import Reservation, Historico
+from django.core.exceptions import ValidationError
 from datetime import datetime
 from re import search
 
+from parking.models import Reservation, Historico
+from parking.forms import FormReservation
 
-#new Reservation
-@api_view(['POST'])
-def new_reservation(request):
-    plate = request.data['plate']
-    valiadation =  Reservation()
+# API
+def new_reservation(plate):
 
-    #Validação mercosul
-    def Validateplate(plate):
-        return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
-    
-    if Validateplate(plate):
-        if Reservation.objects.filter(plate=request.data['plate']).exists():
-            reservation = Reservation.objects.get(plate=request.data['plate'])
-            if reservation.left:
-                reservation.paid = bool(False)
-                reservation.left = bool(False)
-                reservation.date = datetime.now()
-                reservation.save()
+    try:
+        reserva = Reservation(plate=plate)
+        reserva.full_clean()
+    except ValidationError:
+        return {'message':f'The Plate { plate } not valid'}
 
-                Historico.objects.create(
-                    checkIn = datetime.now(), 
-                    id_reservation = reservation
-                )
-                return render(request, "Alert/success.html", {'massage':f'The Plate { plate } is valid, your number check in is {reservation.pk}'})
-            else:
-                return render(request,'Alert/warning.html',{'massage':'Open reservation'})
-        else:
-            newUser = Reservation.objects.create(plate=plate)
+
+    if Reservation.objects.filter(plate=plate).exists():
+        reservation = Reservation.objects.get(plate=plate)
+        
+        if reservation.left:
+            reservation.paid = bool(False)
+            reservation.left = bool(False)
+            reservation.date = datetime.now()
+            reservation.save()
+
             Historico.objects.create(
                 checkIn = datetime.now(), 
-                id_reservation = newUser
-                )
-            return render(request, "Alert/success.html", {'massage':f'The Plate { plate } is valid, your number check in is {newUser.pk}'})
+                id_reservation = reservation
+            )
+
+            return {'message':f'The Plate { plate } is valid, your number check in is {reservation.pk}'}
+        else:
+            return {'message':'Open reservation'}
     else:
-        return render(request, "Alert/warning.html",{'massage':f"The plate {plate} is no Valid"})
-  
+        newUser = Reservation.objects.create(plate=plate)
+        Historico.objects.create(
+            checkIn = datetime.now(), 
+            id_reservation = newUser
+            )
+        return {'message':f'The Plate { plate } is valid, your number check in is {newUser.pk}'}
+    
+# ----------- API -----------
+@api_view(['POST'])
+def api_reservation(request):
+    new = new_reservation(request.data['plate'])
+    return Response(new)
+    
+# ---------- Parking ---------
+def reservation(request):
+    validatedPlate = Validateplate(request.data['plate'])
+
+    if validatedPlate:
+        new = new_reservation(request.data['plate'])
+        return render(request, )
+    else:
+        return Response({'message':f"The plate {request.data['plate']} is no Valid"})
+
 @api_view(['PUT'])
 def reservation_out(request,id):
         
@@ -106,7 +123,7 @@ def reservation_details(request,plate):
     else:
         return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
         # return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
-
+    
 #Auxiliares
 @api_view(['GET'])
 def reservations(request):

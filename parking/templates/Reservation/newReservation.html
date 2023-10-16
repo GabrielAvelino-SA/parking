@@ -7,13 +7,13 @@
 </head>
 <body>
     <form method="post">
-        <div class="form-group">
+      {% csrf_token %}
+      <style>
 
-          <label>Placa  </label>
-          <input type="text" id="plate" class="form-control mx-sm-3" placeholder="Exenplo: AAA-1J23">
-          <small id="passwordHelpInline" class="text-muted">
-            
-          </small>
+      </style>
+        <div class="form-group w-25 p-3 mx-auto ">
+          <label for="plate">Placa</label>
+          <input type="text" id="plate" class="form-control" placeholder="Exenplo: AAA-1J23">
           <button type="submit" class="btn btn-primary my-1">Enviar</button>
         </div>
     </form>

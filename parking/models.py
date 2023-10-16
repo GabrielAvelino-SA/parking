@@ -1,7 +1,7 @@
 from typing import Any
 from django.db import models
 from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
+
 
 class Reservation(models.Model):
     plate = models.CharField(
