@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from typing import Any
 from django.db import models
 from django.core.validators import RegexValidator
@@ -13,6 +14,9 @@ class Reservation(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     paid = models.BooleanField(default=False, blank=False)
     left = models.BooleanField(default=False, blank=False)
+
+    # def clean(self);
+    #     cleaned_data =
 
     def create(self, **validated_data):
          return Reservation.objects.create(**validated_data)

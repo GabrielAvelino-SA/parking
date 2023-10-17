@@ -1,27 +1,21 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.core.exceptions import ValidationError
+from django.template import loader
 from datetime import datetime
-from re import search
 
 from parking.models import Reservation, Historico
 from parking.forms import FormReservation
 
 # API
 def new_reservation(plate):
-
-    try:
-        reserva = Reservation(plate=plate)
-        reserva.full_clean()
-    except ValidationError:
-        return {'message':f'The Plate { plate } not valid'}
-
-
+    # Consulta reservas anteriores
     if Reservation.objects.filter(plate=plate).exists():
         reservation = Reservation.objects.get(plate=plate)
-        
+        # check In Realizado
         if reservation.left:
             reservation.paid = bool(False)
             reservation.left = bool(False)
@@ -52,13 +46,18 @@ def api_reservation(request):
     
 # ---------- Parking ---------
 def reservation(request):
-    validatedPlate = Validateplate(request.data['plate'])
+        if request.method == 'POST':
+            if FormReservation(request.POST).is_valid():                
+                reservation = new_reservation(request.POST['plate'])
+                return render(request, 'Alert/warning.html',{'message':reservation['message']})
+            else:
+                return render(request, "Alert/warning.html",{"message":f"The Plate '{request.POST['plate']}' is no Valid"}) 
+        else:
+            form = FormReservation("Reservation/newReservation.html")
+        return render(request, 'Reservation/newReservation.html', {
+        'form': form,
+        })
 
-    if validatedPlate:
-        new = new_reservation(request.data['plate'])
-        return render(request, )
-    else:
-        return Response({'message':f"The plate {request.data['plate']} is no Valid"})
 
 @api_view(['PUT'])
 def reservation_out(request,id):

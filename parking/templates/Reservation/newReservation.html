@@ -6,14 +6,14 @@
   {% bootstrap_javascript %}
 </head>
 <body>
-    <form method="post">
+    <form  action="" method="post">
       {% csrf_token %}
       <style>
 
       </style>
         <div class="form-group w-25 p-3 mx-auto ">
-          <label for="plate">Placa</label>
-          <input type="text" id="plate" class="form-control" placeholder="Exenplo: AAA-1J23">
+          <label for="plate">Plate</label>
+          <input type="text" name='plate' class="form-control" placeholder="Exenplo: AAA-1J23">
           <button type="submit" class="btn btn-primary my-1">Enviar</button>
         </div>
     </form>

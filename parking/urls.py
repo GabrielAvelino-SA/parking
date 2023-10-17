@@ -12,7 +12,7 @@ urlpatterns = [
     #Parking
     path("", views.reservation, name='reservations'),
 
-    #Auxiliares 
+    #Auxiliares
     path("list/reservations/", views.reservations, name='reservations')
 
 ]
