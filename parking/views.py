@@ -10,7 +10,48 @@ from datetime import datetime
 from parking.models import Reservation, Historico
 from parking.forms import FormReservation
 
-# API
+
+# ----------- API -----------
+
+@api_view(['POST'])
+def api_reservation(request):
+    new = new_reservation(request.data['plate'])
+    return Response(new)
+
+@api_view(['PUT'])
+def api_payment(request,id):
+    payment = payment_reservation(id)   
+    return Response(payment)
+
+@api_view(['PUT'])
+def api_out(request):
+    payment = payment_reservation(id)
+    return Response(payment)
+
+# ---------- Parking ----
+
+def reservation(request):   
+        if request.method == 'POST':
+            form = FormReservation(request.POST['plate'])
+            if form.is_valid():                
+                reservation = new_reservation(request.POST['plate'])
+                return render(request, 'Alert/warning.html',{'message':reservation['message']})
+            else:
+                return render(request, "Alert/warning.html",{"message":f"The Plate '{request.POST['plate']}' is no Valid"}) 
+        else:
+            form = FormReservation("Reservation/newReservation.html")
+        return render(request, 'Reservation/newReservation.html', {
+        'form': form,
+        })
+
+def payment(request):
+    if request.method == 'PUT':
+        pass
+    else:
+        form = FormReservation(request.PUT)
+
+
+# ------------ My Functions ------------
 def new_reservation(plate):
     # Consulta reservas anteriores
     if Reservation.objects.filter(plate=plate).exists():
@@ -36,32 +77,22 @@ def new_reservation(plate):
             checkIn = datetime.now(), 
             id_reservation = newUser
             )
+        # retornar id separado
         return {'message':f'The Plate { plate } is valid, your number check in is {newUser.pk}'}
     
-# ----------- API -----------
-@api_view(['POST'])
-def api_reservation(request):
-    new = new_reservation(request.data['plate'])
-    return Response(new)
-    
-# ---------- Parking ---------
-def reservation(request):
-        if request.method == 'POST':
-            if FormReservation(request.POST).is_valid():                
-                reservation = new_reservation(request.POST['plate'])
-                return render(request, 'Alert/warning.html',{'message':reservation['message']})
-            else:
-                return render(request, "Alert/warning.html",{"message":f"The Plate '{request.POST['plate']}' is no Valid"}) 
-        else:
-            form = FormReservation("Reservation/newReservation.html")
-        return render(request, 'Reservation/newReservation.html', {
-        'form': form,
-        })
+def payment_reservation(id):
+     if Reservation.objects.filter(id=id).exists():
+          reservation = Reservation.objects.get(id=id)
+          if reservation.paid:
+            return {'massage':'Payment done'}
+          else:
+            reservation.payment()
+            return {'massage':'Success Payment'}
+     else:
+        return {"message":"Object inesisttete"}
 
 
-@api_view(['PUT'])
-def reservation_out(request,id):
-        
+def reservation_out(id):
         if Reservation.objects.filter(id=id).exists():
             reservation = Reservation.objects.get(id=id)
             historico = Historico.objects.filter(id_reservation = id).order_by("-id")[0]
@@ -82,24 +113,7 @@ def reservation_out(request,id):
                 return render(request, "Alert/success.html",{'massage':'Success Check Out'})
         else:
             return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
-@api_view(['PUT'])
-def reservation_pay(request,id):
-     if Reservation.objects.filter(id=id).exists():
-
-          reservation = Reservation.objects.get(id=id)
-          status = request.data['paid']
-
-          if reservation.paid:
-            return render(request,'Alert/warning.html',{'massage':'Payment done'})
-          elif status:
-            reservation.paid = bool(status)
-            reservation.save()
-            return render(request,'Alert/success.html', {'massage':'Success Payment'})
-          else:
-              Response({'massage':'Invalid value'})
-            #   return render(request,'Alert/warning.html', {'massage':'Invalid value'})
-     else:
-        return Response({"message":"Object inesisttete"}, status=400)
+        
 
 @api_view(['GET'])
 def reservation_details(request,plate):

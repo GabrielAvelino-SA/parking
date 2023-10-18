@@ -15,14 +15,20 @@ class Reservation(models.Model):
     paid = models.BooleanField(default=False, blank=False)
     left = models.BooleanField(default=False, blank=False)
 
-    # def clean(self);
-    #     cleaned_data =
-
     def create(self, **validated_data):
          return Reservation.objects.create(**validated_data)
     
     def __str__(self):
         return self.plate
+    
+    # My methods 
+    def payment(self):
+        self.paid = True
+        self.save()
+
+    def checkout(self):
+        self.left = True
+        self.save()
     
 class Historico(models.Model):
     id_reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, to_field='id')
