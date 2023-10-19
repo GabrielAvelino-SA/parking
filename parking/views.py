@@ -3,9 +3,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.core.exceptions import ValidationError
-from django.template import loader
+
 from datetime import datetime
+from re import search   
 
 from parking.models import Reservation, Historico
 from parking.forms import FormReservation
@@ -19,8 +19,8 @@ def api_reservation(request):
     return Response(new)
 
 @api_view(['PUT'])
-def api_payment(request,id):
-    payment = payment_reservation(id)   
+def api_payment(request,plate):
+    payment = payment_reservation(plate)   
     return Response(payment)
 
 @api_view(['PUT'])
@@ -29,8 +29,23 @@ def api_out(request):
     return Response(payment)
 
 # ---------- Parking ----
+def reservation_home(request):
+    message  = ''
+    if request.method == 'POST':
+        if valiation_plate(request.POST['plate']):
+            if Reservation.objects.filter(plate=request.POST['plate']).exists():
+                return render(request,"Reservation/Reservation.html")
+            return render(request, "LLL")
+        else:
+            form = FormReservation("Reservation/Reservation.html")
+            message = f"The Plate '{request.POST['plate']}' is no Valid"
+    else:
+        form = FormReservation("Reservation/ReservationHome.html")
+    return render(request, 'Reservation/ReservationHome.html', {
+    'form': form, 'message':message
+    })
 
-def reservation(request):   
+def reservation(request):
         if request.method == 'POST':
             form = FormReservation(request.POST['plate'])
             if form.is_valid():                
@@ -44,14 +59,33 @@ def reservation(request):
         'form': form,
         })
 
-def payment(request):
+def payment(request,plate):
+    if request.method == 'POST':
+        if Reservation.objects.filter(plate=plate).exists():
+            queryReservation = Reservation.objects.get(plate=plate)
+
+            pass
+        form =  FormReservation(request.PUT['plate'])
+        if form.is_valid():
+            pass
+        payment = payment_reservation(plate) 
+        return Response(payment)
+    else:
+        form = FormReservation("Reservation/payment.html")
+    return render(request,'Reservation/payment.html',{
+        'form':form,
+        })
+    
+def checkOut(request):
     if request.method == 'PUT':
         pass
-    else:
-        form = FormReservation(request.PUT)
+
 
 
 # ------------ My Functions ------------
+def valiation_plate(plate):
+    return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
+
 def new_reservation(plate):
     # Consulta reservas anteriores
     if Reservation.objects.filter(plate=plate).exists():
@@ -80,9 +114,9 @@ def new_reservation(plate):
         # retornar id separado
         return {'message':f'The Plate { plate } is valid, your number check in is {newUser.pk}'}
     
-def payment_reservation(id):
-     if Reservation.objects.filter(id=id).exists():
-          reservation = Reservation.objects.get(id=id)
+def payment_reservation(plate):
+     if Reservation.objects.filter(plate=plate).exists():
+          reservation = Reservation.objects.get(plate=plate)
           if reservation.paid:
             return {'massage':'Payment done'}
           else:
@@ -91,8 +125,7 @@ def payment_reservation(id):
      else:
         return {"message":"Object inesisttete"}
 
-
-def reservation_out(id):
+def reservation_out(plate):
         if Reservation.objects.filter(id=id).exists():
             reservation = Reservation.objects.get(id=id)
             historico = Historico.objects.filter(id_reservation = id).order_by("-id")[0]
@@ -136,7 +169,8 @@ def reservation_details(request,plate):
     else:
         return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
         # return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
-    
+
+
 #Auxiliares
 @api_view(['GET'])
 def reservations(request):

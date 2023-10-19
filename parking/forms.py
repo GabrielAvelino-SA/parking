@@ -12,8 +12,8 @@ class FormReservation(forms.ModelForm):
             ],
         max_length=8
         )
-    paid = forms.BooleanField(default = False)
-    left = forms.BooleanField(default = False)
+    paid = forms.BooleanField(required= False)
+    left = forms.BooleanField(required= False)
     
     def clean(self):
         cleaned_data = super(FormReservation, self).clean()
