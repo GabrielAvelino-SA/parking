@@ -26,9 +26,5 @@ class FormReservation(forms.ModelForm):
 
     # def clean_plate(self):
     #     plate = self.cleaned_data['plate']
-    #     if 
-
-
-
-        
+    #     if         
     

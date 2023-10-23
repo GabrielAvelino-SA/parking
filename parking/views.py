@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
 from datetime import datetime
@@ -15,82 +14,74 @@ from parking.forms import FormReservation
 
 @api_view(['POST'])
 def api_reservation(request):
-    new = new_reservation(request.data['plate'])
-    return Response(new)
+    if valiation_plate(request.data['plate']):
+        return Response(new_reservation(request.data['plate']))
+    return Response(status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
-def api_payment(request,plate):
-    payment = payment_reservation(plate)   
-    return Response(payment)
+def api_payment(request,plate):  
+    return Response(payment = payment_reservation(plate) )
 
 @api_view(['PUT'])
-def api_out(request):
-    payment = payment_reservation(id)
-    return Response(payment)
+def api_out(request,plate):
+    return Response(checkout_reservation(plate))
 
-# ---------- Parking ----
-def reservation_home(request):
+# ---------- Parking --------
+
+def reservation(request):
     message  = ''
     if request.method == 'POST':
         if valiation_plate(request.POST['plate']):
-            if Reservation.objects.filter(plate=request.POST['plate']).exists():
-                return render(request,"Reservation/Reservation.html")
-            return render(request, "LLL")
+            new = new_reservation(request.POST['plate'])
+            form =  FormReservation("Reservation/Reservation.html")
+            message = new['message']
         else:
             form = FormReservation("Reservation/Reservation.html")
             message = f"The Plate '{request.POST['plate']}' is no Valid"
     else:
         form = FormReservation("Reservation/ReservationHome.html")
     return render(request, 'Reservation/ReservationHome.html', {
-    'form': form, 'message':message
+    'form': form, 'message':message,    
     })
 
-def reservation(request):
-        if request.method == 'POST':
-            form = FormReservation(request.POST['plate'])
-            if form.is_valid():                
-                reservation = new_reservation(request.POST['plate'])
-                return render(request, 'Alert/warning.html',{'message':reservation['message']})
-            else:
-                return render(request, "Alert/warning.html",{"message":f"The Plate '{request.POST['plate']}' is no Valid"}) 
-        else:
-            form = FormReservation("Reservation/newReservation.html")
-        return render(request, 'Reservation/newReservation.html', {
-        'form': form,
-        })
-
-def payment(request,plate):
+def payment(request):
+    message = ''
     if request.method == 'POST':
-        if Reservation.objects.filter(plate=plate).exists():
-            queryReservation = Reservation.objects.get(plate=plate)
-
-            pass
-        form =  FormReservation(request.PUT['plate'])
-        if form.is_valid():
-            pass
-        payment = payment_reservation(plate) 
-        return Response(payment)
+        pay = payment_reservation(request.POST['plate'])
+        form =  FormReservation(request.POST['plate'])
+        message = pay['message']
     else:
         form = FormReservation("Reservation/payment.html")
     return render(request,'Reservation/payment.html',{
-        'form':form,
+        'form':form, 'message':message      
         })
     
 def checkOut(request):
-    if request.method == 'PUT':
+    message = ''
+    if request.method == 'POST':
+        out  = checkout_reservation(request.POST['plate'])
+        form =  FormReservation(request.POST['plate'])
+        message = out['message']
         pass
-
-
-
+    else:
+        form = FormReservation("Reservation/checkOut.html")
+    return render(request, "Reservation/checkOut.html",{
+        'form':form, 'message':message
+    })
+        
 # ------------ My Functions ------------
+
 def valiation_plate(plate):
     return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
 
-def new_reservation(plate):
-    # Consulta reservas anteriores
+def consulta_reservation(plate):
     if Reservation.objects.filter(plate=plate).exists():
-        reservation = Reservation.objects.get(plate=plate)
-        # check In Realizado
+        return Reservation.objects.get(plate=plate)
+    return None
+
+def new_reservation(plate):
+    reservation = consulta_reservation(plate)
+    if reservation:
         if reservation.left:
             reservation.paid = bool(False)
             reservation.left = bool(False)
@@ -98,13 +89,13 @@ def new_reservation(plate):
             reservation.save()
 
             Historico.objects.create(
-                checkIn = datetime.now(), 
+                checkIn = datetime.now(),
                 id_reservation = reservation
             )
-
             return {'message':f'The Plate { plate } is valid, your number check in is {reservation.pk}'}
         else:
             return {'message':'Open reservation'}
+        
     else:
         newUser = Reservation.objects.create(plate=plate)
         Historico.objects.create(
@@ -113,41 +104,36 @@ def new_reservation(plate):
             )
         # retornar id separado
         return {'message':f'The Plate { plate } is valid, your number check in is {newUser.pk}'}
-    
+
 def payment_reservation(plate):
-     if Reservation.objects.filter(plate=plate).exists():
-          reservation = Reservation.objects.get(plate=plate)
+     reservation = consulta_reservation(plate)
+     if reservation:
           if reservation.paid:
-            return {'massage':'Payment done'}
+            return {'message':'Payment done'}
           else:
             reservation.payment()
-            return {'massage':'Success Payment'}
+            return {'message':'Success Payment'}
      else:
         return {"message":"Object inesisttete"}
 
-def reservation_out(plate):
-        if Reservation.objects.filter(id=id).exists():
-            reservation = Reservation.objects.get(id=id)
-            historico = Historico.objects.filter(id_reservation = id).order_by("-id")[0]
-
+def checkout_reservation(plate):
+        reservation = consulta_reservation(plate)
+        if reservation:
             if reservation.left:
-                return render(request, "Alert/warning.html",{'massage':'Check in Already Done'})
-            if not reservation.paid:
-                return render(request, "Alert/warning.html",{'massage':'You Need to Pay'})
-            elif not reservation.left:
-                status = request.data['left']
-                reservation.left = bool(status)
-                reservation.save()
-                #condicional de validação
+                return {'message':'Check in Already Done'}
+            elif not reservation.paid:
+                return {'message':'You Need to Pay'}
+            else:
+                reservation.checkout()
+                # referenciar historico
                 if status:
+                    historico = Historico.objects.filter(id_reservation = reservation.pk).order_by("-id")[0]
                     historico.checkOut = datetime.now()
                     historico.save()
-
-                return render(request, "Alert/success.html",{'massage':'Success Check Out'})
+                return {'message':'CheckOut alread  '}
         else:
-            return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
+            return {"message":"Object inesisttete"}
         
-
 @api_view(['GET'])
 def reservation_details(request,plate):
     if Reservation.objects.filter(plate=plate).exists():
@@ -170,7 +156,6 @@ def reservation_details(request,plate):
         return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
         # return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
 
-
 #Auxiliares
 @api_view(['GET'])
 def reservations(request):
@@ -178,5 +163,3 @@ def reservations(request):
          return Response(list(Reservation.objects.all().values()))
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    #render(request, "Auxiliares/reservationList.html", {"reservations":reservations})
