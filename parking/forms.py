@@ -24,7 +24,4 @@ class FormReservation(forms.ModelForm):
         model = Reservation
         fields = "__all__"
 
-    # def clean_plate(self):
-    #     plate = self.cleaned_data['plate']
-    #     if         
     

@@ -16,11 +16,13 @@ from parking.forms import FormReservation
 def api_reservation(request):
     if valiation_plate(request.data['plate']):
         return Response(new_reservation(request.data['plate']))
-    return Response(status = status.HTTP_400_BAD_REQUEST)
+    return Response({'message':f"plate '{request.data['plate']}' no valid"}, status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
-def api_payment(request,plate):  
-    return Response(payment = payment_reservation(plate) )
+def api_payment(request,plate):
+    if not valiation_plate(plate):
+        return Response(payment = payment_reservation(plate))
+    return Response({'message':f"plate '{plate}' no valid"}, status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
 def api_out(request,plate):
@@ -30,44 +32,58 @@ def api_out(request,plate):
 
 def reservation(request):
     message  = ''
+    status = 200
+    form = FormReservation("Reservation/ReservationHome.html")
+
     if request.method == 'POST':
-        if valiation_plate(request.POST['plate']):
-            new = new_reservation(request.POST['plate'])
-            form =  FormReservation("Reservation/Reservation.html")
-            message = new['message']
-        else:
-            form = FormReservation("Reservation/Reservation.html")
+        if not valiation_plate(request.POST['plate']):
             message = f"The Plate '{request.POST['plate']}' is no Valid"
+            status = 400 
+        else:       
+            new = new_reservation(request.POST['plate'])
+            message = new['message']
     else:
-        form = FormReservation("Reservation/ReservationHome.html")
-    return render(request, 'Reservation/ReservationHome.html', {
-    'form': form, 'message':message,    
-    })
+        status = 405
+
+    return render(request, 
+                  'Reservation/ReservationHome.html',
+                  {'form': form, 'message':message}
+                  ,status=status)
 
 def payment(request):
     message = ''
+    status = 200
+    
     if request.method == 'POST':
-        pay = payment_reservation(request.POST['plate'])
-        form =  FormReservation(request.POST['plate'])
-        message = pay['message']
+        try:
+            pay = payment_reservation(request.plate)
+            form = FormReservation("Reservation/payment.html")
+            message = pay['message']
+        except None:
+            status = 400
+            form = FormReservation("Reservation/payment.html")
     else:
+        status = 405
         form = FormReservation("Reservation/payment.html")
+
     return render(request,'Reservation/payment.html',{
         'form':form, 'message':message      
-        })
+        },status = status)
     
 def checkOut(request):
     message = ''
+    status = 200
     if request.method == 'POST':
         out  = checkout_reservation(request.POST['plate'])
         form =  FormReservation(request.POST['plate'])
         message = out['message']
         pass
     else:
+        status = 405
         form = FormReservation("Reservation/checkOut.html")
     return render(request, "Reservation/checkOut.html",{
         'form':form, 'message':message
-    })
+    }, status=status)
         
 # ------------ My Functions ------------
 
@@ -83,9 +99,8 @@ def new_reservation(plate):
     reservation = consulta_reservation(plate)
     if reservation:
         if reservation.left:
-            reservation.paid = bool(False)
             reservation.left = bool(False)
-            reservation.date = datetime.now()
+            reservation.left = bool(False)
             reservation.save()
 
             Historico.objects.create(
@@ -95,26 +110,25 @@ def new_reservation(plate):
             return {'message':f'The Plate { plate } is valid, your number check in is {reservation.pk}'}
         else:
             return {'message':'Open reservation'}
-        
     else:
         newUser = Reservation.objects.create(plate=plate)
         Historico.objects.create(
             checkIn = datetime.now(), 
             id_reservation = newUser
             )
-        # retornar id separado
         return {'message':f'The Plate { plate } is valid, your number check in is {newUser.pk}'}
 
 def payment_reservation(plate):
-     reservation = consulta_reservation(plate)
-     if reservation:
+    reservation = consulta_reservation(plate)
+    if reservation:
           if reservation.paid:
             return {'message':'Payment done'}
           else:
             reservation.payment()
             return {'message':'Success Payment'}
-     else:
-        return {"message":"Object inesisttete"}
+    else:
+        return None
+     
 
 def checkout_reservation(plate):
         reservation = consulta_reservation(plate)

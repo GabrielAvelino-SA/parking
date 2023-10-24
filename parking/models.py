@@ -1,7 +1,7 @@
-from collections.abc import Collection
-from typing import Any
 from django.db import models
 from django.core.validators import RegexValidator
+from datetime import datetime
+
 
 
 class Reservation(models.Model):
@@ -16,7 +16,7 @@ class Reservation(models.Model):
     left = models.BooleanField(default=False, blank=False)
 
     def create(self, **validated_data):
-         return Reservation.objects.create(**validated_data)
+         return Reservation.objects.create(**validated_data)    
     
     def __str__(self):
         return self.plate
