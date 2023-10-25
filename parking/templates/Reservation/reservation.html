@@ -20,6 +20,7 @@
         </tr>
       </thead>
       <tbody>
+        {% for reservation in reservations %}
         <tr>
           <th scope="row">{{ reservation.id }}</th>
           <th>{{ reservation.plate }}</th>

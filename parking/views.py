@@ -20,13 +20,32 @@ def api_reservation(request):
 
 @api_view(['PUT'])
 def api_payment(request,plate):
-    if not valiation_plate(plate):
-        return Response(payment = payment_reservation(plate))
-    return Response({'message':f"plate '{plate}' no valid"}, status = status.HTTP_400_BAD_REQUEST)
+    pay  = (payment_reservation(plate))
+    if valiation_plate(plate) and pay:
+       return Response(pay)            
+    return Response({'message':f" The plate '{plate}' is invalid or nonexistent"}, status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
 def api_out(request,plate):
-    return Response(checkout_reservation(plate))
+    out = checkout_reservation(plate)
+    if valiation_plate(plate) and out:
+        return Response(out)
+    return Response({'message':f" The plate '{plate}' is invalid or nonexistent"}, status = status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def api_reservation_detail(request,plate):
+    reservation = details_reservation(plate)
+    if reservation:
+        return Response(reservation)
+    return Response({'message':f" The plate '{plate}' is invalid or nonexistent"}, status = status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def api_reservations(request):
+    if Reservation.objects.all().values():
+         return Response(list(Reservation.objects.all().values()))
+    else:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
 
 # ---------- Parking --------
 
@@ -34,10 +53,9 @@ def reservation(request):
     message  = ''
     status = 200
     form = FormReservation("Reservation/ReservationHome.html")
-
     if request.method == 'POST':
         if not valiation_plate(request.POST['plate']):
-            message = f"The Plate '{request.POST['plate']}' is no Valid"
+            message = f"The Plate '{request.POST['plate']}' is invalid"
             status = 400 
         else:       
             new = new_reservation(request.POST['plate'])
@@ -55,13 +73,13 @@ def payment(request):
     status = 200
     
     if request.method == 'POST':
-        try:
-            pay = payment_reservation(request.plate)
-            form = FormReservation("Reservation/payment.html")
+        pay = payment_reservation(request.POST['plate'])
+        form = FormReservation("Reservation/payment.html")
+        if pay:
             message = pay['message']
-        except None:
+        else:
             status = 400
-            form = FormReservation("Reservation/payment.html")
+            message = 'The plate is invalid or nonexistent'
     else:
         status = 405
         form = FormReservation("Reservation/payment.html")
@@ -76,15 +94,30 @@ def checkOut(request):
     if request.method == 'POST':
         out  = checkout_reservation(request.POST['plate'])
         form =  FormReservation(request.POST['plate'])
-        message = out['message']
-        pass
+        if out:
+            message = out['message']
+        else:
+            status = 400
+            message = 'The plate is invalid or no exist'
     else:
         status = 405
         form = FormReservation("Reservation/checkOut.html")
     return render(request, "Reservation/checkOut.html",{
         'form':form, 'message':message
     }, status=status)
-        
+
+def reservation_detail(request,plate):
+    reservation = consulta_reservation(plate)
+    if reservation:
+        queryReservation = Reservation.objects.get(plate=plate)
+        queryHistory = Historico.objects.filter(id_reservation=queryReservation.pk)
+        return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
+    return render(request, {'message':f" The plate '{plate}' is invalid or nonexistent"}, status = status.HTTP_400_BAD_REQUEST)
+
+def list_reservation(request):
+    reservartions = Reservation.objects.all()
+    return render(request,"Reservation/reservation.html",{'reservations':reservartions}, status = 200)
+
 # ------------ My Functions ------------
 
 def valiation_plate(plate):
@@ -99,7 +132,7 @@ def new_reservation(plate):
     reservation = consulta_reservation(plate)
     if reservation:
         if reservation.left:
-            reservation.left = bool(False)
+            reservation.paid = bool(False)
             reservation.left = bool(False)
             reservation.save()
 
@@ -129,7 +162,6 @@ def payment_reservation(plate):
     else:
         return None
      
-
 def checkout_reservation(plate):
         reservation = consulta_reservation(plate)
         if reservation:
@@ -146,11 +178,11 @@ def checkout_reservation(plate):
                     historico.save()
                 return {'message':'CheckOut alread  '}
         else:
-            return {"message":"Object inesisttete"}
+            return None
         
-@api_view(['GET'])
-def reservation_details(request,plate):
-    if Reservation.objects.filter(plate=plate).exists():
+def details_reservation(plate):
+    reservation = consulta_reservation(plate)
+    if reservation:
         data = Historico.objects.select_related('id_reservation').filter(id_reservation__plate=plate ).values('checkIn','checkOut','id_reservation__plate')
 
         result = []
@@ -162,18 +194,8 @@ def reservation_details(request,plate):
 
         json = {
             'plate':data[0]['id_reservation__plate'],
-            'hitory': result
+            'history': result
             }
-        return Response(json)
-        # return render (request, "Reservation/reservationDetail.html", {'reservation':queryReservation,'history':queryHistory})
+        return json
     else:
-        return Response({"message":"Object inesisttete"}, status=status.HTTP_400_BAD_REQUEST)
-        # return render(request, "Alert/warning.html", {'massage':'Reservation not found'})
-
-#Auxiliares
-@api_view(['GET'])
-def reservations(request):
-    if Reservation.objects.all().values():
-         return Response(list(Reservation.objects.all().values()))
-    else:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return None
