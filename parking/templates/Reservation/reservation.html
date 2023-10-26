@@ -24,7 +24,12 @@
         <tr>
           <th scope="row">{{ reservation.id }}</th>
           <th>{{ reservation.plate }}</th>
+          {% if reservation.left != True %}
+          <th>{{ reservation.get_duration  }}</th>
+          {% else %}
           <th>{{ reservation.time }}</th>
+          {% endif %}
+          
           <th>{{ reservation.paid }}</th>
           <th>{{ reservation.left }}</th>
         </tr>

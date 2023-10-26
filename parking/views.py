@@ -41,9 +41,9 @@ def api_reservation_detail(request,plate):
 
 @api_view(['GET'])
 def api_reservations(request):
-    if Reservation.objects.all().values():
+    try:
          return Response(list(Reservation.objects.all().values()))
-    else:
+    except:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 
@@ -132,8 +132,7 @@ def new_reservation(plate):
     reservation = consulta_reservation(plate)
     if reservation:
         if reservation.left:
-            reservation.paid = bool(False)
-            reservation.left = bool(False)
+            reservation.new_reservation()
             reservation.save()
 
             Historico.objects.create(
@@ -155,7 +154,7 @@ def payment_reservation(plate):
     reservation = consulta_reservation(plate)
     if reservation:
           if reservation.paid:
-            return {'message':'Payment done'}
+            return {'message':'Payment already Done'}
           else:
             reservation.payment()
             return {'message':'Success Payment'}
@@ -166,7 +165,7 @@ def checkout_reservation(plate):
         reservation = consulta_reservation(plate)
         if reservation:
             if reservation.left:
-                return {'message':'Check in Already Done'}
+                return {'message':'Check-In Already Done'}
             elif not reservation.paid:
                 return {'message':'You Need to Pay'}
             else:
@@ -176,7 +175,7 @@ def checkout_reservation(plate):
                     historico = Historico.objects.filter(id_reservation = reservation.pk).order_by("-id")[0]
                     historico.checkOut = datetime.now()
                     historico.save()
-                return {'message':'CheckOut alread  '}
+                return {'message':'Success CheckOut'}
         else:
             return None
         

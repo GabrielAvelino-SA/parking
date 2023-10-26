@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from datetime import datetime
-
+from datetime import datetime,  timezone
 
 
 class Reservation(models.Model):
@@ -16,10 +15,15 @@ class Reservation(models.Model):
     left = models.BooleanField(default=False, blank=False)
 
     def create(self, **validated_data):
-         return Reservation.objects.create(**validated_data)    
-    
+        return Reservation.objects.create(**validated_data)    
+
     def __str__(self):
         return self.plate
+    
+    def new_reservation(self):
+        self.date = datetime.now()
+        self.paid = False
+        self.left = False
     
     # My methods 
     def payment(self):
@@ -29,17 +33,24 @@ class Reservation(models.Model):
     def checkout(self):
         self.left = True
         self.save()
-    
+
+    def get_duration(self):
+        time = datetime.now(timezone.utc) - self.date
+        try: 
+            return time
+        except:
+           return None
+
 class Historico(models.Model):
     id_reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, to_field='id')
     checkIn = models.DateTimeField()
     checkOut = models.DateTimeField(null=True, blank=True)
 
-    def create(self, **validated_data):
-         return Historico.objects.create(**validated_data)
-
     def __str__(self) :
         return self.id_reservation.plate
+    
+    def create(self, **validated_data):
+         return Historico.objects.create(**validated_data)
     
     def get_deltaTime(self):
         try: 

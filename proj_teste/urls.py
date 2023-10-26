@@ -7,4 +7,5 @@ urlpatterns = [
     
     #My URLS
     path('parking/', include("parking.urls")),
+
 ]
