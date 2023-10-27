@@ -20,12 +20,13 @@ class Reservation(models.Model):
     def __str__(self):
         return self.plate
     
+    # My methods 
     def new_reservation(self):
         self.date = datetime.now()
         self.paid = False
         self.left = False
+        self.save()
     
-    # My methods 
     def payment(self):
         self.paid = True
         self.save()

@@ -46,7 +46,6 @@ def api_reservations(request):
     except:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-
 # ---------- Parking --------
 
 def reservation(request):
@@ -60,6 +59,7 @@ def reservation(request):
         else:       
             new = new_reservation(request.POST['plate'])
             message = new['message']
+            # redirect
     else:
         status = 405
 
@@ -71,10 +71,9 @@ def reservation(request):
 def payment(request):
     message = ''
     status = 200
-    
+    form = FormReservation("Reservation/payment.html")
     if request.method == 'POST':
         pay = payment_reservation(request.POST['plate'])
-        form = FormReservation("Reservation/payment.html")
         if pay:
             message = pay['message']
         else:
@@ -82,7 +81,6 @@ def payment(request):
             message = 'The plate is invalid or nonexistent'
     else:
         status = 405
-        form = FormReservation("Reservation/payment.html")
 
     return render(request,'Reservation/payment.html',{
         'form':form, 'message':message      
@@ -91,17 +89,17 @@ def payment(request):
 def checkOut(request):
     message = ''
     status = 200
+    form = FormReservation("Reservation/checkOut.html")
     if request.method == 'POST':
         out  = checkout_reservation(request.POST['plate'])
-        form =  FormReservation(request.POST['plate'])
         if out:
             message = out['message']
         else:
             status = 400
-            message = 'The plate is invalid or no exist'
+            message = 'The plate is invalid or nonexistent'
     else:
         status = 405
-        form = FormReservation("Reservation/checkOut.html")
+        
     return render(request, "Reservation/checkOut.html",{
         'form':form, 'message':message
     }, status=status)
@@ -120,7 +118,7 @@ def list_reservation(request):
 
 # ------------ My Functions ------------
 
-def valiation_plate(plate):
+def valiation_plate(plate): 
     return search("^[A-Z]{3}[-][0-9][0-9A-J][0-9]{2}",plate)
 
 def consulta_reservation(plate):
@@ -133,7 +131,6 @@ def new_reservation(plate):
     if reservation:
         if reservation.left:
             reservation.new_reservation()
-            reservation.save()
 
             Historico.objects.create(
                 checkIn = datetime.now(),
@@ -170,11 +167,9 @@ def checkout_reservation(plate):
                 return {'message':'You Need to Pay'}
             else:
                 reservation.checkout()
-                # referenciar historico
-                if status:
-                    historico = Historico.objects.filter(id_reservation = reservation.pk).order_by("-id")[0]
-                    historico.checkOut = datetime.now()
-                    historico.save()
+                historico = Historico.objects.filter(id_reservation = reservation.pk).order_by("-id")[0]
+                historico.checkOut = datetime.now()
+                historico.save()
                 return {'message':'Success CheckOut'}
         else:
             return None
